@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/schema/fst.v1.schema.json",
+  "title": "FST Standardized Output Schema v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "raw_description", "fst_level", "search_direction", "slot", "maneuver", "special_scene", "obstacles", "confidence"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "fst.v1" },
+    "image_id": { "type": "string", "minLength": 1 },
+    "raw_description": { "type": "string" },
+    "fst_level": { "type": "integer", "enum": [1, 2, 3] },
+    "search_direction": { "$ref": "#/definitions/SearchDirection" },
+    "slot": { "$ref": "#/definitions/Slot" },
+    "maneuver": { "$ref": "#/definitions/Maneuver" },
+    "special_scene": { "$ref": "#/definitions/SpecialScene" },
+    "obstacles": { "$ref": "#/definitions/Obstacles" },
+    "confidence": { "$ref": "#/definitions/Confidence" },
+    "fst_text": { "type": "string" },
+    "extensions": { "type": "object", "additionalProperties": true }
+  },
+  "definitions": {
+    "SearchDirection": { "type": "string", "enum": ["LEFT", "RIGHT", "UNKNOWN"] },
+    "SlotType": { "type": "string", "enum": ["PERPENDICULAR", "PARALLEL", "ANGLED", "UNKNOWN"] },
+    "Maneuver": { "type": "string", "enum": ["PARK_IN", "PARK_OUT", "HEAD_IN", "TAIL_OUT", "UNKNOWN"] },
+    "LineColor": { "type": "string", "enum": ["WHITE", "YELLOW", "BLUE", "MIXED", "NONE", "UNKNOWN"] },
+    "LineVisibility": { "type": "string", "enum": ["CLEAR", "FAINT", "MISSING", "UNKNOWN"] },
+    "LineStyle": { "type": "string", "enum": ["SOLID", "DASHED", "MIXED", "UNKNOWN"] },
+    "OccupancyStatus": { "type": "string", "enum": ["FREE", "OCCUPIED", "UNKNOWN"] },
+    "OccupiedBy": { "type": "string", "enum": ["VEHICLE", "CONE", "LOCK", "BARRIER", "UNKNOWN"] },
+    "P0Scene": { "type": "string", "enum": ["DEAD_END", "NARROW_LANE"] },
+    "P1Scene": { "type": "string", "enum": ["SLOPE", "SPLIT_SLOPE", "SPACE_UNMARKED", "COLOR_BLOCK", "BRICK_GRASS", "STEP_BRICK_GRASS", "WLC", "MICRO", "BRICK_STONE", "NARROW_SLOT", "EXTREME_NARROW_SLOT", "MECHANICAL"] },
+    "ObstacleType": { "type": "string", "enum": ["EMPTY", "VEHICLE", "CURB", "WALL", "PILLAR", "CONE", "WATER_BARRIER", "FENCE", "LAMP", "FIRE_BOX_SUSPENDED", "BUSH", "UNKNOWN"] },
+    "Position": { "type": "string", "enum": ["1", "2", "3", "4", "5", "6", "7", "P_LEFT", "P_RIGHT"] },
+    "Marking": {
+      "type": "object", "additionalProperties": false,
+      "required": ["line_color", "line_visibility", "line_style"],
+      "properties": {
+        "line_color": { "$ref": "#/definitions/LineColor" },
+        "line_visibility": { "$ref": "#/definitions/LineVisibility" },
+        "line_style": { "$ref": "#/definitions/LineStyle" }
+      }
+    },
+    "Occupancy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "occupied_by"],
+      "properties": {
+        "status": { "$ref": "#/definitions/OccupancyStatus" },
+        "occupied_by": { "type": "array", "items": { "$ref": "#/definitions/OccupiedBy" }, "uniqueItems": true }
+      }
+    },
+    "Slot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["slot_type", "marking", "occupancy"],
+      "properties": {
+        "slot_type": { "$ref": "#/definitions/SlotType" },
+        "angle_deg": { "type": ["number", "null"], "minimum": 0, "maximum": 90 },
+        "marking": { "$ref": "#/definitions/Marking" },
+        "occupancy": { "$ref": "#/definitions/Occupancy" }
+      }
+    },
+    "SpecialScene": {
+      "type": "object", "additionalProperties": false,
+      "required": ["P0", "P1"],
+      "properties": {
+        "P0": { "type": "array", "items": { "$ref": "#/definitions/P0Scene" }, "uniqueItems": true },
+        "P1": { "type": "array", "items": { "$ref": "#/definitions/P1Scene" }, "uniqueItems": true }
+      }
+    },
+    "Token": {
+      "type": "object", "additionalProperties": false,
+      "required": ["positions", "type"],
+      "properties": {
+        "positions": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/Position" }, "uniqueItems": true },
+        "type": { "$ref": "#/definitions/ObstacleType" }
+      }
+    },
+    "PosMap": {
+      "type": "object", "additionalProperties": false,
+      "required": ["1", "2", "3", "4", "5", "6", "7", "P_LEFT", "P_RIGHT"],
+      "properties": {
+        "1": { "type": "array", "items": { "$ref": "#/definitions/ObstacleType" } },
+        "2": { "type": "array", "items": { "$ref": "#/definitions/ObstacleType" } },
+        "3": { "type": "array", "items": { "$ref": "#/definitions/ObstacleType" } },
+        "4": { "type": "array", "items": { "$ref": "#/definitions/ObstacleType" } },
+        "5": { "type": "array", "items": { "$ref": "#/definitions/ObstacleType" } },
+        "6": { "type": "array", "items": { "$ref": "#/definitions/ObstacleType" } },
+        "7": { "type": "array", "items": { "$ref": "#/definitions/ObstacleType" } },
+        "P_LEFT": { "type": "array", "items": { "$ref": "#/definitions/ObstacleType" } },
+        "P_RIGHT": { "type": "array", "items": { "$ref": "#/definitions/ObstacleType" } }
+      }
+    },
+    "Obstacles": {
+      "type": "object", "additionalProperties": false,
+      "required": ["pos_map", "tokens"],
+      "properties": {
+        "pos_map": { "$ref": "#/definitions/PosMap" },
+        "tokens": { "type": "array", "items": { "$ref": "#/definitions/Token" } }
+      }
+    },
+    "Confidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["overall", "slot_type", "marking", "occupancy", "obstacles"],
+      "properties": {
+        "overall": { "type": "number", "minimum": 0, "maximum": 1 },
+        "slot_type": { "type": "number", "minimum": 0, "maximum": 1 },
+        "marking": { "type": "number", "minimum": 0, "maximum": 1 },
+        "occupancy": { "type": "number", "minimum": 0, "maximum": 1 },
+        "obstacles": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

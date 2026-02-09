@@ -1,0 +1,28 @@
+[project]
+name = "fst-classifier-tool"
+version = "0.1.0"
+description = "FST parking slot classifier: train on your own photos, run locally on any machine"
+requires-python = ">=3.9"
+dependencies = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "timm>=0.9",
+    "onnx>=1.14",
+    "onnxruntime>=1.15",
+    "pydantic>=2.0",
+    "jsonschema>=4.0",
+    "pillow>=10.0",
+    "gradio>=4.0",
+    "scikit-learn>=1.3",
+    "tqdm>=4.60",
+    "pandas>=2.0",
+]
+
+[project.optional-dependencies]
+build = ["pyinstaller>=6.0"]
+
+[project.scripts]
+fst-train = "fst.train:main"
+fst-label = "fst.label_tool:main"
+fst-serve = "fst.app:main"
+fst-export = "fst.export_onnx:main"

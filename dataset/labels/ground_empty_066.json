@@ -1,0 +1,25 @@
+{
+  "image_id": "ground_empty_066",
+  "slot_type": "PERPENDICULAR",
+  "maneuver": "PARK_IN",
+  "marking": {
+    "line_color": "YELLOW",
+    "line_visibility": "CLEAR",
+    "line_style": "SOLID"
+  },
+  "special_scene": {
+    "P0": [],
+    "P1": []
+  },
+  "obstacles": {
+    "1": "CURB",
+    "2": "CURB",
+    "3": "CURB",
+    "P_LEFT": "EMPTY",
+    "7": "UNKNOWN",
+    "P_RIGHT": "VEHICLE",
+    "4": "UNKNOWN",
+    "5": "UNKNOWN",
+    "6": "UNKNOWN"
+  }
+}

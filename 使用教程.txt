@@ -1,0 +1,46 @@
+这个文件夹里的 FST 车位分类器工具 是一个专门用于识别停车位照片（如车位类型、障碍物等）并输出结构化 JSON 数据的 Python 项目。
+
+以下是该工具的使用说明（请在终端或命令行中执行）：
+
+准备工作
+首先，你需要进入代码所在的实际目录：
+cd "C:\Users\cookie\Downloads\fst_classifier_tool\fst_classifier_tool"
+
+
+建议先安装依赖环境（确保已安装 Python）：
+pip install -r requirements.txt
+
+核心问题：现有公开数据集都是监控俯拍或车载环视鸟瞰，没有你需要的"人站在车位前手机拍"的地面视角数据集。
+新增了一个下载脚本 scripts/download_parking_images.py，用法：
+bashpip install icrawler
+python scripts/download_parking_images.py --output ./raw_images --count 50
+它会用 31 个中英文关键词从 Bing 图片搜索自动爬取，去重后输出到 dataset/images/。但爬取的图片需要你手动清洗——删掉俯拍、航拍、示意图等不符合要求的。
+
+核心使用步骤
+#### 第一步：标注数据 (Labeling)
+如果你有自己的停车位照片，将它们放入 dataset/images/ 文件夹。然后运行标注工具进行分类：
+python -m fst.label_tool --images dataset/images --labels dataset/labels
+
+快捷键：A/← 上一张，D/→ 下一张，S 保存。
+
+#### 第二步：训练模型 (Training)
+标注完成后，运行训练脚本生成模型文件：
+python -m fst.train --data ./dataset --output ./checkpoints
+
+
+#### 第三步：导出并运行界面 (Inference)
+为了方便使用，你可以将训练好的模型导出并启动一个网页界面来测试：
+导出 ONNX：
+   python -m fst.export_onnx --checkpoint checkpoints/best_model.pth --output fst_classifier.onnx
+   
+
+启动网页界面：
+python -m fst.app --model fst_classifier.onnx
+运行后，命令行会给出一个地址（如 http://127.0.0.1:7860），在浏览器打开即可拖入图片查看识别结果。
+
+项目结构说明
+fst/: 核心代码包，包含模型定义、训练逻辑和标注工具。
+dataset/: 存放你的图片和标注 JSON 文件的地方。
+ARCHITECTURE.md: 如果你想了解背后的技术细节（如 EfficientNet 网络结构），可以阅读这个文档。
+
+提示：这个工具是完全本地运行的，不依赖任何云端 API，非常适合处理私有的车位感知数据。

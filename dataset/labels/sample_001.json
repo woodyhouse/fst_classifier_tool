@@ -1,0 +1,26 @@
+{
+  "image_id": "sample_001",
+  "slot_type": "PERPENDICULAR",
+  "maneuver": "PARK_IN",
+  "search_direction": "RIGHT",
+  "marking": {
+    "line_color": "WHITE",
+    "line_visibility": "CLEAR",
+    "line_style": "SOLID"
+  },
+  "special_scene": {
+    "P0": [],
+    "P1": []
+  },
+  "obstacles": {
+    "1": "EMPTY",
+    "2": "EMPTY",
+    "3": "EMPTY",
+    "4": "EMPTY",
+    "5": "CURB",
+    "6": "EMPTY",
+    "7": "EMPTY",
+    "P_LEFT": "VEHICLE",
+    "P_RIGHT": "VEHICLE"
+  }
+}

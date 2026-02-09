@@ -1,0 +1,25 @@
+{
+  "image_id": "images",
+  "slot_type": "UNKNOWN",
+  "maneuver": "UNKNOWN",
+  "marking": {
+    "line_color": "UNKNOWN",
+    "line_visibility": "UNKNOWN",
+    "line_style": "UNKNOWN"
+  },
+  "special_scene": {
+    "P0": [],
+    "P1": []
+  },
+  "obstacles": {
+    "1": "UNKNOWN",
+    "2": "UNKNOWN",
+    "3": "UNKNOWN",
+    "P_LEFT": "UNKNOWN",
+    "7": "UNKNOWN",
+    "P_RIGHT": "UNKNOWN",
+    "4": "UNKNOWN",
+    "5": "UNKNOWN",
+    "6": "UNKNOWN"
+  }
+}
