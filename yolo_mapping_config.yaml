@@ -1,0 +1,62 @@
+# YOLO 检测器配置文件
+# 用于自定义 COCO 类别到 FST ObstacleType 的映射
+
+# 映射规则说明：
+# - 左边是 YOLO 检测到的 COCO 类别名称
+# - 右边是对应的 FST ObstacleType
+# - 可以将多个 COCO 类别映射到同一个 FST 类型
+# - 使用 "EMPTY" 表示忽略该类别
+
+# 车辆类
+car: VEHICLE
+truck: VEHICLE
+bus: VEHICLE
+motorcycle: VEHICLE
+bicycle: VEHICLE
+
+# 人和动物
+person: PEDESTRIAN
+dog: PEDESTRIAN
+cat: PEDESTRIAN
+bird: EMPTY
+horse: PEDESTRIAN
+
+# 交通设施
+traffic light: LAMP
+stop sign: SIGN
+parking meter: THIN_POLE
+fire hydrant: FIRE_BOX_SUSPENDED
+
+# 障碍物
+bench: CURB
+potted plant: BUSH
+chair: EMPTY
+couch: EMPTY
+dining table: EMPTY
+
+# 建筑物相关
+door: WALL
+window: EMPTY
+
+# 其他
+umbrella: EMPTY
+handbag: EMPTY
+backpack: EMPTY
+suitcase: EMPTY
+bottle: EMPTY
+
+# FST ObstacleType 可选值：
+# - VEHICLE: 车辆
+# - PEDESTRIAN: 行人
+# - LAMP: 路灯/灯柱
+# - PILLAR: 柱子
+# - WALL: 墙
+# - CURB: 路沿
+# - CONE: 锥桶
+# - SIGN: 标志牌
+# - BUSH: 灌木
+# - FLOWER_BED: 花坛
+# - THIN_POLE: 细杆
+# - FIRE_BOX_SUSPENDED: 消防栓
+# - EMPTY: 空/忽略
+# - UNKNOWN: 未知

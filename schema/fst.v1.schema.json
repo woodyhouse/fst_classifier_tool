@@ -30,7 +30,7 @@
     "OccupiedBy": { "type": "string", "enum": ["VEHICLE", "CONE", "LOCK", "BARRIER", "UNKNOWN"] },
     "P0Scene": { "type": "string", "enum": ["DEAD_END", "NARROW_LANE"] },
     "P1Scene": { "type": "string", "enum": ["SLOPE", "SPLIT_SLOPE", "SPACE_UNMARKED", "COLOR_BLOCK", "BRICK_GRASS", "STEP_BRICK_GRASS", "WLC", "MICRO", "BRICK_STONE", "NARROW_SLOT", "EXTREME_NARROW_SLOT", "MECHANICAL"] },
-    "ObstacleType": { "type": "string", "enum": ["EMPTY", "VEHICLE", "CURB", "WALL", "PILLAR", "CONE", "WATER_BARRIER", "FENCE", "LAMP", "FIRE_BOX_SUSPENDED", "BUSH", "UNKNOWN"] },
+    "ObstacleType": { "type": "string", "enum": ["EMPTY", "VEHICLE", "CURB", "WALL", "PILLAR", "CONE", "WATER_BARRIER", "FENCE", "LAMP", "FIRE_BOX_SUSPENDED", "BUSH", "CIVIL_AIR_DEFENSE_DOOR", "STAIRS", "TREE", "THIN_POLE", "PARKING_LOCK", "PROTRUDING_WALL", "UNKNOWN"] },
     "Position": { "type": "string", "enum": ["1", "2", "3", "4", "5", "6", "7", "P_LEFT", "P_RIGHT"] },
     "Marking": {
       "type": "object", "additionalProperties": false,

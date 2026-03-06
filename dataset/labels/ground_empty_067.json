@@ -12,14 +12,14 @@
     "P1": []
   },
   "obstacles": {
-    "1": "WALL",
-    "2": "WALL",
-    "3": "WALL",
-    "P_LEFT": "VEHICLE",
+    "1": "EMPTY",
+    "2": "EMPTY",
+    "3": "EMPTY",
+    "4": "EMPTY",
+    "5": "EMPTY",
+    "6": "EMPTY",
     "7": "EMPTY",
-    "P_RIGHT": "VEHICLE",
-    "4": "UNKNOWN",
-    "5": "UNKNOWN",
-    "6": "UNKNOWN"
+    "P_LEFT": "EMPTY",
+    "P_RIGHT": "EMPTY"
   }
 }

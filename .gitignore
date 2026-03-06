@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# 数据和模型
+dataset/
+checkpoints/
+models/
+weights/
+output/
+*.pth
+*.onnx
+*.pt
+
+# 临时文件
+*.jpg
+*.jpeg
+*.png
+test_*.jpg
+*_result.jpg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 项目特定
+.claude/

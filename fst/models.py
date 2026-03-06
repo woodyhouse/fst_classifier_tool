@@ -69,6 +69,12 @@ class ObstacleType(str, Enum):
     LAMP = "LAMP"
     FIRE_BOX_SUSPENDED = "FIRE_BOX_SUSPENDED"
     BUSH = "BUSH"
+    CIVIL_AIR_DEFENSE_DOOR = "CIVIL_AIR_DEFENSE_DOOR"
+    STAIRS = "STAIRS"
+    TREE = "TREE"
+    THIN_POLE = "THIN_POLE"
+    PARKING_LOCK = "PARKING_LOCK"
+    PROTRUDING_WALL = "PROTRUDING_WALL"
     UNKNOWN = "UNKNOWN"
 
 
@@ -134,7 +140,7 @@ SPECIAL_SCENE_TO_IDX = _enum_to_idx(SPECIAL_SCENE_CLASSES)
 NUM_SLOT_TYPE = len(SLOT_TYPE_CLASSES)        # 4
 NUM_MANEUVER = len(MANEUVER_CLASSES)          # 5
 NUM_SPECIAL_SCENE = len(SPECIAL_SCENE_CLASSES) # 14
-NUM_OBSTACLE = len(OBSTACLE_CLASSES)          # 12
+NUM_OBSTACLE = len(OBSTACLE_CLASSES)          # 18
 NUM_LINE_COLOR = len(LINE_COLOR_CLASSES)      # 6
 NUM_LINE_VIS = len(LINE_VIS_CLASSES)          # 4
 NUM_LINE_STYLE = len(LINE_STYLE_CLASSES)      # 3
@@ -215,7 +221,8 @@ _OBSTACLE_ZH = {
     "EMPTY": "空", "VEHICLE": "车", "CURB": "路沿", "WALL": "墙",
     "PILLAR": "柱", "CONE": "锥桶", "WATER_BARRIER": "水马",
     "FENCE": "栅栏", "LAMP": "路灯", "FIRE_BOX_SUSPENDED": "悬空消防箱",
-    "BUSH": "灌木丛", "UNKNOWN": "未知",
+    "BUSH": "灌木丛", "CIVIL_AIR_DEFENSE_DOOR": "人防门", "STAIRS": "阶梯", 
+    "TREE": "树", "THIN_POLE": "细杆", "PARKING_LOCK": "地锁", "PROTRUDING_WALL": "凸出墙体", "UNKNOWN": "未知",
 }
 _P0_ZH = {"DEAD_END": "断头路", "NARROW_LANE": "窄通道"}
 _P1_ZH = {

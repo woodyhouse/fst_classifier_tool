@@ -1,11 +1,11 @@
 {
   "image_id": "images",
-  "slot_type": "UNKNOWN",
-  "maneuver": "UNKNOWN",
+  "slot_type": "PERPENDICULAR",
+  "maneuver": "PARK_IN",
   "marking": {
-    "line_color": "UNKNOWN",
-    "line_visibility": "UNKNOWN",
-    "line_style": "UNKNOWN"
+    "line_color": "WHITE",
+    "line_visibility": "FAINT",
+    "line_style": "SOLID"
   },
   "special_scene": {
     "P0": [],
@@ -13,11 +13,11 @@
   },
   "obstacles": {
     "1": "UNKNOWN",
-    "2": "UNKNOWN",
-    "3": "UNKNOWN",
-    "P_LEFT": "UNKNOWN",
-    "7": "UNKNOWN",
-    "P_RIGHT": "UNKNOWN",
+    "2": "EMPTY",
+    "3": "PILLAR",
+    "P_LEFT": "VEHICLE",
+    "7": "VEHICLE",
+    "P_RIGHT": "VEHICLE",
     "4": "UNKNOWN",
     "5": "UNKNOWN",
     "6": "UNKNOWN"

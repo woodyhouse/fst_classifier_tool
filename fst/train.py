@@ -24,14 +24,13 @@ from tqdm import tqdm
 
 from fst.network import FSTClassifier, count_parameters
 from fst.dataset import FSTDataset, collate_fn
-from fst.models import NUM_POSITIONS
 
 
 class FSTLoss(nn.Module):
     """
-    多任务加权损失函数.
+    多任务加权损失函数 (简化版 - 移除 obstacle 头).
 
-    - slot_type, maneuver, obstacles, marking: CrossEntropy
+    - slot_type, maneuver, marking: CrossEntropy
     - special_scene: BCEWithLogitsLoss (多标签)
     """
 
@@ -40,7 +39,6 @@ class FSTLoss(nn.Module):
         w_slot: float = 1.0,
         w_maneuver: float = 1.0,
         w_scene: float = 0.8,
-        w_obstacle: float = 0.5,
         w_marking: float = 0.6,
     ):
         super().__init__()
@@ -49,7 +47,6 @@ class FSTLoss(nn.Module):
         self.w_slot = w_slot
         self.w_maneuver = w_maneuver
         self.w_scene = w_scene
-        self.w_obstacle = w_obstacle
         self.w_marking = w_marking
 
     def forward(
@@ -68,13 +65,7 @@ class FSTLoss(nn.Module):
         # Head C: special_scene (multi-label)
         losses["special_scene"] = self.bce(preds["special_scene"], targets["special_scene"]) * self.w_scene
 
-        # Head D: obstacles (9 positions)
-        obs_loss = torch.tensor(0.0, device=preds["slot_type"].device)
-        for i in range(NUM_POSITIONS):
-            obs_loss = obs_loss + self.ce(preds[f"obs_{i}"], targets[f"obs_{i}"])
-        losses["obstacles"] = (obs_loss / NUM_POSITIONS) * self.w_obstacle
-
-        # Head E: marking
+        # Head D: marking
         mk_loss = (
             self.ce(preds["line_color"], targets["line_color"])
             + self.ce(preds["line_vis"], targets["line_vis"])
@@ -93,13 +84,6 @@ def compute_accuracy(preds: Dict[str, torch.Tensor], targets: Dict[str, torch.Te
     for key in ["slot_type", "maneuver", "line_color", "line_vis", "line_style"]:
         pred_cls = preds[key].argmax(dim=-1)
         accs[key] = (pred_cls == targets[key]).float().mean().item()
-
-    # obstacles 平均准确率
-    obs_correct = 0.0
-    for i in range(NUM_POSITIONS):
-        pred_cls = preds[f"obs_{i}"].argmax(dim=-1)
-        obs_correct += (pred_cls == targets[f"obs_{i}"]).float().mean().item()
-    accs["obstacles_avg"] = obs_correct / NUM_POSITIONS
 
     # special_scene: 使用 threshold=0.5 计算 F1-like accuracy
     pred_ss = (torch.sigmoid(preds["special_scene"]) > 0.5).float()
@@ -299,7 +283,7 @@ def train(
               f"val_loss={val_loss:.4f} "
               f"val_acc_slot={val_metrics.get('acc_slot_type', 0):.3f} "
               f"val_acc_mv={val_metrics.get('acc_maneuver', 0):.3f} "
-              f"val_acc_obs={val_metrics.get('acc_obstacles_avg', 0):.3f} "
+              f"val_acc_marking={val_metrics.get('acc_line_color', 0):.3f} "
               f"({elapsed:.1f}s)")
 
         if val_loss < best_val_loss:

@@ -1,13 +1,14 @@
 """
-多头 CNN 分类器网络定义.
+多头 CNN 分类器网络定义 (简化版 - 移除 obstacle 头).
 
 Backbone: EfficientNet-B0 (timm)
 Heads:
   A) slot_type       → 4 类 softmax
   B) maneuver        → 5 类 softmax
   C) special_scene   → 14 维 sigmoid（多标签）
-  D) obstacles       → 9 个位置 × 12 类 softmax
-  E) marking         → 3 个子头 (color/vis/style)
+  D) marking         → 3 个子头 (color/vis/style)
+
+注: 障碍物检测改用 YOLO + 几何算法实现
 """
 from __future__ import annotations
 
@@ -19,8 +20,7 @@ import timm
 
 from fst.models import (
     NUM_SLOT_TYPE, NUM_MANEUVER, NUM_SPECIAL_SCENE,
-    NUM_OBSTACLE, NUM_LINE_COLOR, NUM_LINE_VIS, NUM_LINE_STYLE,
-    NUM_POSITIONS,
+    NUM_LINE_COLOR, NUM_LINE_VIS, NUM_LINE_STYLE,
 )
 
 
@@ -92,13 +92,7 @@ class FSTClassifier(nn.Module):
         # ── Head C: special_scene (multi-label sigmoid) ──
         self.head_special_scene = ClassificationHead(neck_dim, head_hidden, NUM_SPECIAL_SCENE, dropout)
 
-        # ── Head D: obstacles — 9 个位置各一个 softmax 头 ──
-        self.obstacle_heads = nn.ModuleList([
-            ClassificationHead(neck_dim, head_hidden, NUM_OBSTACLE, dropout)
-            for _ in range(NUM_POSITIONS)
-        ])
-
-        # ── Head E: marking — 3 个子头 ──
+        # ── Head D: marking — 3 个子头 ──
         self.head_line_color = ClassificationHead(neck_dim, head_hidden, NUM_LINE_COLOR, dropout)
         self.head_line_vis = ClassificationHead(neck_dim, head_hidden, NUM_LINE_VIS, dropout)
         self.head_line_style = ClassificationHead(neck_dim, head_hidden, NUM_LINE_STYLE, dropout)
@@ -140,7 +134,6 @@ class FSTClassifier(nn.Module):
                 "slot_type":      [B, 4]  logits
                 "maneuver":       [B, 5]  logits
                 "special_scene":  [B, 14] logits (apply sigmoid at inference)
-                "obs_0" .. "obs_8": [B, 12] logits (9个位置)
                 "line_color":     [B, 6]  logits
                 "line_vis":       [B, 4]  logits
                 "line_style":     [B, 3]  logits
@@ -152,10 +145,6 @@ class FSTClassifier(nn.Module):
         out["slot_type"] = self.head_slot_type(feat)
         out["maneuver"] = self.head_maneuver(feat)
         out["special_scene"] = self.head_special_scene(feat)
-
-        for i, head in enumerate(self.obstacle_heads):
-            out[f"obs_{i}"] = head(feat)
-
         out["line_color"] = self.head_line_color(feat)
         out["line_vis"] = self.head_line_vis(feat)
         out["line_style"] = self.head_line_style(feat)

@@ -10,3 +10,5 @@ gradio>=4.0
 scikit-learn>=1.3
 tqdm>=4.60
 pandas>=2.0
+opencv-python>=4.8
+ultralytics>=8.0

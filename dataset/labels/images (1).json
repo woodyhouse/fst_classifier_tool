@@ -1,25 +1,27 @@
 {
   "image_id": "images (1)",
-  "slot_type": "UNKNOWN",
-  "maneuver": "UNKNOWN",
+  "slot_type": "PERPENDICULAR",
+  "maneuver": "PARK_IN",
   "marking": {
-    "line_color": "UNKNOWN",
-    "line_visibility": "UNKNOWN",
-    "line_style": "UNKNOWN"
+    "line_color": "WHITE",
+    "line_visibility": "CLEAR",
+    "line_style": "SOLID"
   },
   "special_scene": {
     "P0": [],
-    "P1": []
+    "P1": [
+      "EXTREME_NARROW_SLOT"
+    ]
   },
   "obstacles": {
-    "1": "UNKNOWN",
-    "2": "UNKNOWN",
+    "1": "EMPTY",
+    "2": "VEHICLE",
     "3": "UNKNOWN",
-    "P_LEFT": "UNKNOWN",
-    "7": "UNKNOWN",
+    "P_LEFT": "EMPTY",
+    "7": "EMPTY",
     "P_RIGHT": "UNKNOWN",
-    "4": "UNKNOWN",
-    "5": "UNKNOWN",
-    "6": "UNKNOWN"
+    "4": "PILLAR",
+    "5": "EMPTY",
+    "6": "PILLAR"
   }
 }
