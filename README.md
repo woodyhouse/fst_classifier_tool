@@ -16,39 +16,13 @@
 - 脚本化验证：提供模板检测、DMPR 测试、可视化与评估脚本
 - 文档分层：架构、迁移、标注、模型测试等说明已整理到 `docs/`
 
-## README 图片展示
-
-以下 12 张图片已按 4 张一组拼接为 3 张展示图，并作为 README 资源纳入仓库。
-
-### 组 1
-
-包含：
-`check_corrected_20260215_221708_7f45f0.jpg`、
-`parking_00027.jpg`、
-`parking_00008.jpg`、
-`image62_dl_result.jpg`
-
-![README Gallery Group 1](docs/readme_assets/gallery_group_01.jpg)
-
-### 组 2
-
-包含：
-`image449.jpeg`、
-`image392.jpeg`、
-`image17.jpeg`、
-`image145.jpeg`
+## 效果展示
 
 ![README Gallery Group 2](docs/readme_assets/gallery_group_02.jpg)
 
-### 组 3
-
-包含：
-`image131.jpeg`、
-`corrected_20260215_221708_7f45f0.jpg`、
-`parking_00002.jpg`、
-`image47.jpeg`
-
 ![README Gallery Group 3](docs/readme_assets/gallery_group_03.jpg)
+
+![README Gallery Group 1](docs/readme_assets/gallery_group_01.jpg)
 
 ## 快速开始
 
