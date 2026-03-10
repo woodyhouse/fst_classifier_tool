@@ -10,15 +10,13 @@ YOLO 物体检测模块 - 用于识别车位周围的障碍物.
 """
 from __future__ import annotations
 
+import importlib
 from typing import List, Tuple, Optional
 from dataclasses import dataclass
+from pathlib import Path
 import numpy as np
 
-try:
-    from ultralytics import YOLO
-    YOLO_AVAILABLE = True
-except ImportError:
-    YOLO_AVAILABLE = False
+from fst.paths import MODELS_DIR
 
 
 @dataclass
@@ -63,12 +61,19 @@ class YOLODetector:
         conf_threshold: float = 0.25,
         device: str = "cpu",
     ):
-        if not YOLO_AVAILABLE:
-            raise ImportError(
-                "ultralytics not installed. Run: pip install ultralytics"
-            )
+        try:
+            YOLO = importlib.import_module("ultralytics").YOLO
+        except Exception as exc:
+            raise ImportError("ultralytics not available. Run: pip install ultralytics") from exc
 
-        self.model = YOLO(f"yolov8{model_size}.pt")
+        # Prefer local weights to avoid runtime download in restricted environments.
+        candidates = [
+            MODELS_DIR / f"yolov8{model_size}.pt",
+            Path(f"models/yolov8{model_size}.pt"),
+            Path(f"yolov8{model_size}.pt"),
+        ]
+        weight_path = next((p for p in candidates if p.exists()), Path(f"yolov8{model_size}.pt"))
+        self.model = YOLO(str(weight_path))
         self.conf_threshold = conf_threshold
         self.device = device
 

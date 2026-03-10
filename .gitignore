@@ -14,9 +14,12 @@ checkpoints/
 models/
 weights/
 output/
+test_results*/
+external/
 *.pth
 *.onnx
 *.pt
+resources/templates/*.pkl
 
 # 临时文件
 *.jpg
@@ -24,6 +27,12 @@ output/
 *.png
 test_*.jpg
 *_result.jpg
+
+# README 展示图
+!docs/readme_assets/
+!docs/readme_assets/*.jpg
+!docs/readme_assets/*.jpeg
+!docs/readme_assets/*.png
 
 # IDE
 .vscode/

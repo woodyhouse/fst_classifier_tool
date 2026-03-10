@@ -27,10 +27,10 @@ from PIL import Image, ImageTk
 from fst.models import (
     SLOT_TYPE_CLASSES, MANEUVER_CLASSES,
     LINE_COLOR_CLASSES, LINE_VIS_CLASSES, LINE_STYLE_CLASSES,
-    SPECIAL_SCENE_CLASSES,
+    SPECIAL_SCENE_CLASSES, POSITION_KEYS,
 )
 from fst.yolo_detector import YOLODetector, Detection
-from fst.parking_geometry import ParkingGeometry, ParkingSlot, GridCell
+from fst.simple_detector import SimpleParkingLineDetector, simple_grid_mapping
 
 SUPPORTED_EXT = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
@@ -70,24 +70,15 @@ class AutoLabelTool:
         print(f"正在加载 YOLO 模型 (yolov8{yolo_size})...")
         self.yolo = YOLODetector(model_size=yolo_size, conf_threshold=0.25)
 
-        # 根据参数选择使用深度学习或传统方法
         if use_dl:
-            print("正在加载深度学习标记点检测器...")
-            self.geometry = ParkingGeometry(
-                use_marking_points=False,
-                use_dl_marking_points=True,
-                dl_weights_path="weights/dmpr_ps.pth"
-            )
-        else:
-            self.geometry = ParkingGeometry(use_marking_points=True)  # 启用传统标记点检测
+            print("提示: 简化架构中已禁用深度学习标记点检测，自动回退到简单线检测。")
+        self.line_detector = SimpleParkingLineDetector()
 
         # 缓存当前图片的分析结果
         self.current_detections: List[Detection] = []
-        self.current_slot: Optional[ParkingSlot] = None
-        self.current_grid: Dict[str, GridCell] = {}
-        self.current_obstacles: Dict[str, str] = {}
+        self.current_line_result: Dict = {"vertical_lines": [], "horizontal_lines": [], "slot_type": "UNKNOWN", "has_lines": False}
+        self.current_obstacles: Dict[str, str] = {pos: "EMPTY" for pos in POSITION_KEYS}
         self.current_slot_type: str = "UNKNOWN"
-        self.current_marking_points = []  # 缓存标记点用于可视化
 
         # ── 主窗口 ──
         self.root = tk.Tk()
@@ -226,156 +217,120 @@ class AutoLabelTool:
         return display_str.split(" ")[0].strip()
 
     def analyze_image(self, img_rgb: np.ndarray):
-        """自动分析图片: YOLO + 几何 + 车位类型识别."""
+        """自动分析图片: YOLO + 简化线检测 + 规则映射."""
         print(f"\n🔍 开始自动分析...")
 
         # 1. YOLO 检测
         self.current_detections = self.yolo.detect(img_rgb)
         print(f"✓ YOLO 检测到 {len(self.current_detections)} 个物体")
 
-        # 2. 标记点检测（如果启用）
-        if self.geometry.use_dl_marking_points:
-            self.current_marking_points = self.geometry.dl_mp_detector.detect_marking_points(img_rgb)
-        elif self.geometry.use_marking_points:
-            self.current_marking_points = self.geometry.mp_detector.detect_marking_points(img_rgb)
-        else:
-            self.current_marking_points = []
+        # 2. 简化线检测（用于车位类型估计）
+        img_bgr = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2BGR)
+        self.current_line_result = self.line_detector.detect(img_bgr)
+        n_v = len(self.current_line_result.get("vertical_lines", []))
+        n_h = len(self.current_line_result.get("horizontal_lines", []))
+        print(f"✓ 检测到线段: vertical={n_v}, horizontal={n_h}")
 
-        # 3. 车位线检测 + 透视分析
-        lines = self.geometry.detect_parking_lines(img_rgb)
-        print(f"✓ 检测到 {len(lines)} 条车位线")
-
-        self.current_slot = self.geometry.find_parking_slot(img_rgb, lines)
-        if self.current_slot:
-            print(f"✓ 车位中心: {self.current_slot.center}, 尺寸: {self.current_slot.width:.0f}x{self.current_slot.height:.0f}")
-        else:
-            print("⚠ 未检测到车位，使用默认布局")
-
-        # 4. 车位类型识别（基于几何特征）
-        self.current_slot_type = self._infer_slot_type(self.current_slot, lines)
+        # 3. 车位类型识别
+        self.current_slot_type = self._infer_slot_type(self.current_line_result)
         print(f"✓ 推断车位类型: {self.current_slot_type}")
 
-        # 5. 创建 9 宫格
-        self.current_grid = self.geometry.create_9grid(self.current_slot)
-        print(f"✓ 创建 9 宫格完成")
-
-        # 6. 物体映射到格子
-        self.current_obstacles = self._map_obstacles()
+        # 4. 9宫格障碍物映射
+        h, w = img_rgb.shape[:2]
+        self.current_obstacles = self._map_obstacles(h, w)
         print(f"✓ 物体映射完成")
 
         # 更新自动识别结果显示
-        method = "深度学习" if self.geometry.use_dl_marking_points else "传统CV"
-        result_text = f"检测方法: {method}\n"
+        result_text = "检测方法: YOLO + 简化线检测\n"
         result_text += f"车位类型: {_display(self.current_slot_type)}\n"
         result_text += f"检测物体: {len(self.current_detections)} 个\n"
-        result_text += f"标记点: {len(self.current_marking_points)} 个\n"
-        result_text += f"车位线: {len(lines)} 条\n"
+        result_text += f"垂直线: {n_v} 条\n"
+        result_text += f"水平线: {n_h} 条\n"
         result_text += f"9宫格障碍物: {sum(1 for v in self.current_obstacles.values() if v != 'EMPTY')} 个"
         self.auto_result_label.config(text=result_text)
 
         # 自动填充车位类型
         self.slot_type_var.set(_display(self.current_slot_type))
 
-    def _infer_slot_type(self, slot: Optional[ParkingSlot], lines: List) -> str:
-        """基于几何特征推断车位类型."""
-        if not slot:
+    def _infer_slot_type(self, line_result: Dict) -> str:
+        """根据简化线检测结果推断车位类型."""
+        if not line_result.get("has_lines", False):
             return "UNKNOWN"
+        return line_result.get("slot_type", "UNKNOWN")
 
-        # 简化版本: 基于宽高比判断
-        aspect_ratio = slot.width / slot.height if slot.height > 0 else 1.0
-
-        if aspect_ratio > 1.5:
-            return "PARALLEL"  # 水平车位（宽 > 高）
-        elif aspect_ratio < 0.7:
-            return "PERPENDICULAR"  # 垂直车位（高 > 宽）
-        elif 0.7 <= aspect_ratio <= 1.5:
-            # 需要更复杂的角度分析
-            # 这里简化为斜列
-            return "ANGLED"
-        else:
-            return "UNKNOWN"
-
-    def _map_obstacles(self) -> Dict[str, str]:
-        """将检测到的物体映射到 9 宫格."""
-        obstacles = {pos: "EMPTY" for pos in self.current_grid.keys()}
-
+    def _map_obstacles(self, h: int, w: int) -> Dict[str, str]:
+        """将YOLO检测结果映射到简化9宫格."""
+        by_type: Dict[str, List] = {}
         for det in self.current_detections:
-            grid_pos = self.geometry.map_point_to_grid(det.center, self.current_grid)
-            if grid_pos:
-                fst_type = self.yolo.map_to_fst_type(det.class_name)
-                # 如果该格子已有物体，保留第一个（或可以改为列表）
-                if obstacles[grid_pos] == "EMPTY":
-                    obstacles[grid_pos] = fst_type
+            fst_type = self.yolo.map_to_fst_type(det.class_name)
+            if fst_type in ("EMPTY", "UNKNOWN"):
+                continue
+            by_type.setdefault(fst_type, []).append(det.bbox)
 
+        grid = simple_grid_mapping(by_type, (h, w))
+        obstacles: Dict[str, str] = {}
+        for pos in POSITION_KEYS:
+            val = grid.get(pos, ["EMPTY"])
+            if isinstance(val, list):
+                obstacles[pos] = val[0] if val else "UNKNOWN"
+            else:
+                obstacles[pos] = val
         return obstacles
 
     def visualize_analysis(self, img_rgb: np.ndarray) -> np.ndarray:
-        """可视化分析结果: 检测框 + 标记点 + 9宫格 + 透视关系."""
+        """可视化分析结果: 检测框 + 线检测 + 简化9宫格."""
         vis = img_rgb.copy()
 
-        # 1. 绘制标记点（黄色，最先绘制避免被覆盖）
-        if self.current_marking_points:
-            for p in self.current_marking_points:
-                # 标记点（黄色圆圈）
-                cv2.circle(vis, (int(p.x), int(p.y)), 5, (255, 255, 0), -1)
-                # 方向箭头
-                length = 20
-                dx = length * np.cos(p.direction)
-                dy = length * np.sin(p.direction)
-                end_x = int(p.x + dx)
-                end_y = int(p.y + dy)
-                cv2.arrowedLine(vis, (int(p.x), int(p.y)), (end_x, end_y),
-                               (255, 255, 0), 2, tipLength=0.3)
-
-        # 2. 绘制 YOLO 检测框
+        # 1. YOLO检测框
         for det in self.current_detections:
             x1, y1, x2, y2 = det.bbox
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-
-            # 检测框（蓝色）
             cv2.rectangle(vis, (x1, y1), (x2, y2), (0, 120, 255), 2)
-
-            # 标签
             fst_type = self.yolo.map_to_fst_type(det.class_name)
             label = f"{det.class_name}→{fst_type}"
             cv2.putText(vis, label, (x1, y1 - 5),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 120, 255), 1)
-
-            # 中心点
             cx, cy = det.center
             cv2.circle(vis, (int(cx), int(cy)), 4, (255, 0, 0), -1)
 
-        # 3. 绘制车位边界（红色粗线，显示透视关系）
-        if self.current_slot and self.current_slot.corners is not None:
-            pts = self.current_slot.corners.astype(np.int32).reshape((-1, 1, 2))
-            cv2.polylines(vis, [pts], True, (255, 0, 0), 3)
+        # 2. 简化线检测可视化
+        for line in self.current_line_result.get("vertical_lines", []):
+            x1, y1, x2, y2 = line
+            cv2.line(vis, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 2)
+        for line in self.current_line_result.get("horizontal_lines", []):
+            x1, y1, x2, y2 = line
+            cv2.line(vis, (int(x1), int(y1)), (int(x2), int(y2)), (255, 255, 0), 2)
 
-            # 车位中心点
-            cx, cy = self.current_slot.center
-            cx, cy = int(cx), int(cy)
-            cv2.circle(vis, (cx, cy), 8, (255, 0, 0), -1)
-            cv2.putText(vis, "Slot Center", (cx + 15, cy - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+        # 3. 简化3x3网格 + 位置文本
+        h, w = vis.shape[:2]
+        grid_h = h // 3
+        grid_w = w // 3
+        for i in (1, 2):
+            cv2.line(vis, (0, i * grid_h), (w, i * grid_h), (0, 255, 0), 1)
+            cv2.line(vis, (i * grid_w, 0), (i * grid_w, h), (0, 255, 0), 1)
 
-        # 4. 绘制 9 宫格（绿色，考虑透视变换）
-        for pos, cell in self.current_grid.items():
-            pts = cell.polygon.astype(np.int32).reshape((-1, 1, 2))
-            cv2.polylines(vis, [pts], True, (0, 255, 0), 2)
-
-            # 标注位置和障碍物
-            cx, cy = cell.center
+        text_anchor = {
+            "1": (grid_w // 2, grid_h // 2),
+            "2": (grid_w + grid_w // 2, grid_h // 2),
+            "3": (2 * grid_w + grid_w // 2, grid_h // 2),
+            "4": (grid_w // 2, grid_h + grid_h // 2),
+            "5": (grid_w + grid_w // 2, grid_h + grid_h // 2),
+            "6": (2 * grid_w + grid_w // 2, grid_h + grid_h // 2),
+            "7": (w // 2, 2 * grid_h + grid_h // 2),
+            "P_LEFT": (grid_w // 3, int(h * 0.78)),
+            "P_RIGHT": (w - grid_w // 2, int(h * 0.78)),
+        }
+        for pos, (cx, cy) in text_anchor.items():
             obstacle = self.current_obstacles.get(pos, "EMPTY")
-            text = f"{pos}: {obstacle}"
-            cv2.putText(vis, text, (int(cx) - 30, int(cy)),
+            cv2.putText(vis, f"{pos}:{obstacle}", (int(cx) - 45, int(cy)),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
 
-        # 5. 添加图例
+        # 4. 图例
         legend_y = 30
         cv2.putText(vis, "Legend:", (10, legend_y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-        cv2.putText(vis, "Yellow: Marking Points", (10, legend_y + 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-        cv2.putText(vis, "Blue: YOLO Detection", (10, legend_y + 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 120, 255), 1)
-        cv2.putText(vis, "Red: Parking Slot", (10, legend_y + 75), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
-        cv2.putText(vis, "Green: 9-Grid", (10, legend_y + 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+        cv2.putText(vis, "Blue: YOLO Detection", (10, legend_y + 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 120, 255), 1)
+        cv2.putText(vis, "Red: Detected Line", (10, legend_y + 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+        cv2.putText(vis, "Green: 3x3 Grid", (10, legend_y + 75), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
         return vis
 

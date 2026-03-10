@@ -32,12 +32,16 @@ def main():
     infer_parser.add_argument('--image', help='单张图片路径')
     infer_parser.add_argument('--images', help='批量图片目录')
     infer_parser.add_argument('--model', default='checkpoints/best_model.pth', help='模型路径')
+    infer_parser.add_argument('--yolo', default='n', choices=['n', 's', 'm', 'l', 'x'], help='YOLO 模型大小')
+    infer_parser.add_argument('--device', default='cpu', help='设备 (cpu/cuda)')
     infer_parser.add_argument('--output', default='./results', help='输出目录')
     infer_parser.add_argument('--visualize', action='store_true', help='可视化结果')
 
     # Web 界面
     app_parser = subparsers.add_parser('app', help='启动 Gradio 界面')
-    app_parser.add_argument('--model', default='checkpoints/best_model.pth', help='模型路径')
+    app_parser.add_argument('--model', default='models/fst_classifier.onnx', help='模型路径(.onnx/.pth)')
+    app_parser.add_argument('--yolo', default='n', choices=['n', 's', 'm', 'l', 'x'], help='YOLO 模型大小')
+    app_parser.add_argument('--device', default='cpu', help='设备 (cpu/cuda)')
 
     args = parser.parse_args()
 
@@ -71,14 +75,15 @@ def main():
     elif args.command == 'infer':
         if args.image:
             from examples.hybrid_inference_demo import main as infer_main
-            sys.argv = ['hybrid_inference_demo', '--image', args.image, '--model', args.model]
+            sys.argv = ['hybrid_inference_demo', '--image', args.image, '--model', args.model,
+                        '--yolo', args.yolo, '--device', args.device]
             if args.visualize:
                 sys.argv.append('--visualize')
             infer_main()
         elif args.images:
             from examples.batch_inference import main as batch_main
             sys.argv = ['batch_inference', '--images', args.images, '--model', args.model,
-                        '--output', args.output]
+                        '--yolo', args.yolo, '--device', args.device, '--output', args.output]
             if args.visualize:
                 sys.argv.append('--visualize')
             batch_main()
@@ -87,7 +92,7 @@ def main():
 
     elif args.command == 'app':
         from fst.app import main as app_main
-        sys.argv = ['app', '--model', args.model]
+        sys.argv = ['app', '--model', args.model, '--yolo', args.yolo, '--device', args.device]
         app_main()
 
 if __name__ == '__main__':

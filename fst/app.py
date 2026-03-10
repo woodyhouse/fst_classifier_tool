@@ -28,14 +28,14 @@ from fst.models import (
     SPECIAL_SCENE_CLASSES, POSITION_KEYS,
     build_fst_text,
 )
+from fst.paths import DATASET_DIR, DATASET_IMAGES_DIR, DATASET_LABELS_DIR
 
 # 全局推理引擎
 engine: FSTInference | None = None
 
-# 数据集保存路径（相对于运行目录）
-DATASET_DIR = Path("dataset")
-IMAGES_DIR = DATASET_DIR / "images"
-LABELS_DIR = DATASET_DIR / "labels"
+# 数据集保存路径
+IMAGES_DIR = DATASET_IMAGES_DIR
+LABELS_DIR = DATASET_LABELS_DIR
 
 # 中文映射
 _SLOT_ZH = {"PERPENDICULAR": "垂直", "PARALLEL": "水平", "ANGLED": "鱼骨", "UNKNOWN": "未知"}
@@ -319,14 +319,23 @@ def main():
     global engine
 
     parser = argparse.ArgumentParser(description="FST Classifier Gradio App")
-    parser.add_argument("--model", required=True, help="Path to ONNX model")
+    parser.add_argument("--model", required=True, help="Path to .onnx or .pth model")
     parser.add_argument("--img-size", type=int, default=384)
     parser.add_argument("--port", type=int, default=7860)
     parser.add_argument("--device", default="cpu", choices=["cpu", "cuda"])
+    parser.add_argument("--yolo", default="n", choices=["n", "s", "m", "l", "x"], help="YOLO model size")
+    parser.add_argument("--yolo-conf", type=float, default=0.25, help="YOLO confidence threshold")
     parser.add_argument("--share", action="store_true")
     args = parser.parse_args()
 
-    engine = FSTInference(args.model, img_size=args.img_size, device=args.device)
+    engine = FSTInference(
+        args.model,
+        img_size=args.img_size,
+        device=args.device,
+        use_yolo=True,
+        yolo_model_size=args.yolo,
+        yolo_conf_threshold=args.yolo_conf,
+    )
 
     demo = build_ui()
     demo.launch(server_port=args.port, share=args.share, inbrowser=True, theme=gr.themes.Soft(), server_name="0.0.0.0")
